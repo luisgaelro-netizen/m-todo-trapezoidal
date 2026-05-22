@@ -1,0 +1,72 @@
+import streamlit as st
+import math
+
+# Tu función matemática original
+def f(expr, x):
+    env = {k: v for k, v in math.__dict__.items() if not k.startswith("__")}
+    env['x'] = x
+    expr = expr.replace('^', '**')
+    return eval(expr, {"__builtins__": {}}, env)
+
+# Título de la App que se verá en la presentación
+st.title(" Calculadora de Integrales (Método del Trapecio)")
+st.write("Introduce los datos para calcular la integral y el área bajo la curva.")
+
+# --- INTERFAZ VISUAL (Sustituye a los input()) ---
+expr = st.text_input("Función f(x):", value="x^2")
+
+# Colocamos los números en 3 columnas para que se vea ordenado
+col1, col2, col3 = st.columns(3)
+with col1:
+    a = st.number_input("Límite inferior (a):", value=0.0)
+with col2:
+    b = st.number_input("Límite superior (b):", value=1.0)
+with col3:
+    n = st.number_input("Intervalos (n):", value=10, step=1)
+
+# Botón para activar el cálculo
+if st.button("Calcular Resultados"):
+    try:
+        # --- LÓGICA DE TU CÓDIGO ---
+        h = (b - a) / n
+        val_x = []
+        val_fx = []
+        val_abs = []
+
+        for i in range(n + 1):
+            xi = a + i * h
+            fxi = f(expr, xi)
+            val_x.append(xi)
+            val_fx.append(fxi)
+            val_abs.append(abs(fxi))
+
+        sigma_i = val_fx[0] + 2 * sum(val_fx[1:-1]) + val_fx[-1]
+        sigma_a = val_abs[0] + 2 * sum(val_abs[1:-1]) + val_abs[-1]
+
+        integral = (h / 2) * sigma_i
+        area = (h / 2) * sigma_a
+
+        # --- MOSTRAR RESULTADOS (Sustituye a los print()) ---
+        st.markdown(f"### 📊 Tabla de Puntos (h = {h:.4f})")
+        
+        # Creamos una tabla interactiva y limpia
+        tabla_datos = {
+            "i": list(range(n + 1)),
+            "x": [round(x, 4) for x in val_x],
+            "f(x)": [round(fx, 4) for fx in val_fx],
+            "|f(x)|": [round(vabs, 4) for vabs in val_abs]
+        }
+        st.dataframe(tabla_datos, use_container_width=True)
+
+        st.markdown("###  Totales")
+        # st.metric muestra tarjetas visuales muy elegantes
+        c1, c2 = st.columns(2)
+        with c1:
+            st.metric("Sumatoria Integral (Sigma I)", f"{sigma_i:.4f}")
+            st.metric("Integral Total", f"{integral:.4f}")
+        with c2:
+            st.metric("Sumatoria Área (Sigma A)", f"{sigma_a:.4f}")
+            st.metric("Área Total", f"{area:.4f}")
+
+    except Exception as e:
+        st.error(f"Hubo un error en el cálculo. Revisa que la función esté bien escrita. Error: {e}")
